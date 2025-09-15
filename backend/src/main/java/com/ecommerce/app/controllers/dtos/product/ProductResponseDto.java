@@ -1,0 +1,18 @@
+package com.ecommerce.app.controllers.dtos.product;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
+public class ProductResponseDto {
+    private String name;
+    private String color;
+    private Float price;
+}
