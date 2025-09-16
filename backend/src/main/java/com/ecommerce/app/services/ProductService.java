@@ -25,6 +25,13 @@ public class ProductService {
         return convertListToDtoList(products);
     }
 
+    public List<ProductResponseDto> filter(Long id, Float min, Float max, String name, String color) {
+        return productRepository.findWithFilter(id, min, max, name, color)
+                .stream()
+                .map(this::convertModelToResponseDto)
+                .toList();
+    }
+
     public ProductResponseDto insert(ProductCreateDto productDto) {
         try {
             ProductModel newProduct = convertRequestDtoToModel(productDto);

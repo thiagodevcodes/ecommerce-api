@@ -35,14 +35,26 @@ public class ProductController {
         return ResponseEntity.ok().body(productDtoList);
     }
 
-    @GetMapping("find")
-    public ResponseEntity<ProductResponseDto> findById(@RequestParam("id") Long id) {
+    @GetMapping("filter")
+    public ResponseEntity<List<ProductResponseDto>> filter(
+            @RequestParam(value = "id", required = false) Long id,
+            @RequestParam(value = "priceMin", required = false) Float min,
+            @RequestParam(value = "priceMax", required = false) Float max,
+            @RequestParam(value = "color", required = false) String color,
+            @RequestParam(value = "name", required = false) String name) {
+
+        return ResponseEntity.ok(productService.filter(id, min, max, name, color));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductResponseDto> findById(@PathVariable("id") Long id) {
         ProductResponseDto productDto = productService.findById(id);
         return ResponseEntity.ok().body(productDto);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProductResponseDto> updateById(@Valid @RequestBody ProductUpdateDto product, @PathVariable("id") Long id, BindingResult br) {
+    public ResponseEntity<ProductResponseDto> updateById(@Valid @RequestBody ProductUpdateDto product,
+            @PathVariable("id") Long id, BindingResult br) {
         if (br.hasErrors())
             throw new ConstraintException(br.getAllErrors().get(0).getDefaultMessage());
 
