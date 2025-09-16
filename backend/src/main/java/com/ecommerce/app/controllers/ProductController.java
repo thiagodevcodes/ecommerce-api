@@ -3,6 +3,10 @@ package com.ecommerce.app.controllers;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -36,14 +40,18 @@ public class ProductController {
     }
 
     @GetMapping("filter")
-    public ResponseEntity<List<ProductResponseDto>> filter(
-            @RequestParam(value = "id", required = false) Long id,
+    public ResponseEntity<Page<ProductResponseDto>> filter(
             @RequestParam(value = "priceMin", required = false) Float min,
             @RequestParam(value = "priceMax", required = false) Float max,
             @RequestParam(value = "color", required = false) String color,
-            @RequestParam(value = "name", required = false) String name) {
-
-        return ResponseEntity.ok(productService.filter(id, min, max, name, color));
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(value = "sort", defaultValue = "id") String sort,
+            @RequestParam(value = "direction", defaultValue = "ASC") String direction
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.Direction.fromString(direction), sort);
+        return ResponseEntity.ok(productService.filter(min, max, name, color, pageable));
     }
 
     @GetMapping("/{id}")
