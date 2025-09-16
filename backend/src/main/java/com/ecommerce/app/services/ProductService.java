@@ -27,7 +27,7 @@ public class ProductService {
         return convertListToDtoList(products);
     }
 
-    public Page<ProductResponseDto> filter(Float min, Float max, String name, String color,
+    public Page<ProductResponseDto> findAllWithFilter(Float min, Float max, String name, String color,
             Pageable pageable) {
         return productRepository.findWithFilter(min, max, name, color, pageable)
                 .map(this::convertModelToResponseDto);

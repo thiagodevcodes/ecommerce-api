@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,10 +13,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ecommerce.app.controllers.dtos.page.PageResponseDto;
 import com.ecommerce.app.controllers.dtos.product.ProductCreateDto;
+import com.ecommerce.app.controllers.dtos.product.ProductFilterRequest;
 import com.ecommerce.app.controllers.dtos.product.ProductResponseDto;
 import com.ecommerce.app.controllers.dtos.product.ProductUpdateDto;
 import com.ecommerce.app.docs.ProductApiDoc;
@@ -33,18 +33,23 @@ public class ProductController implements ProductApiDoc {
     private ProductService productService;
 
     @GetMapping
-    public ResponseEntity<Page<ProductResponseDto>> findAll(
-            @RequestParam(value = "id", required = false) Long id,
-            @RequestParam(value = "priceMin", required = false) Float min,
-            @RequestParam(value = "priceMax", required = false) Float max,
-            @RequestParam(value = "color", required = false) String color,
-            @RequestParam(value = "name", required = false) String name,
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size,
-            @RequestParam(value = "sort", defaultValue = "id") String sort,
-            @RequestParam(value = "direction", defaultValue = "ASC") String direction) {
-        Pageable pageable = PageRequest.of(page, size, Sort.Direction.fromString(direction), sort);
-        return ResponseEntity.ok(productService.filter(min, max, name, color, pageable));
+    public ResponseEntity<PageResponseDto<ProductResponseDto>> findAll(ProductFilterRequest filterRequest) {
+        Pageable pageable = PageRequest.of(
+                filterRequest.getPage(),
+                filterRequest.getSize(),
+                filterRequest.getDirection(),
+                filterRequest.getSort()
+        );
+
+        Page<ProductResponseDto> page = productService.findAllWithFilter(
+                filterRequest.getPriceMin(),
+                filterRequest.getPriceMax(),
+                filterRequest.getName(),
+                filterRequest.getColor(),
+                pageable
+        );
+
+        return ResponseEntity.ok(PageResponseDto.from(page));
     }
 
     @GetMapping("/{id}")
