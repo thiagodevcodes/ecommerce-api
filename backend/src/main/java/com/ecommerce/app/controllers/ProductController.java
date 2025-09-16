@@ -1,7 +1,5 @@
 package com.ecommerce.app.controllers;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ecommerce.app.controllers.dtos.product.ProductCreateDto;
 import com.ecommerce.app.controllers.dtos.product.ProductResponseDto;
 import com.ecommerce.app.controllers.dtos.product.ProductUpdateDto;
+import com.ecommerce.app.docs.ProductApiDoc;
 import com.ecommerce.app.services.ProductService;
 import com.ecommerce.app.services.exceptions.ConstraintException;
 
@@ -29,18 +28,13 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/products")
-public class ProductController {
+public class ProductController implements ProductApiDoc {
     @Autowired
     private ProductService productService;
 
     @GetMapping
-    public ResponseEntity<List<ProductResponseDto>> findAll() {
-        List<ProductResponseDto> productDtoList = productService.findAll();
-        return ResponseEntity.ok().body(productDtoList);
-    }
-
-    @GetMapping("filter")
-    public ResponseEntity<Page<ProductResponseDto>> filter(
+    public ResponseEntity<Page<ProductResponseDto>> findAll(
+            @RequestParam(value = "id", required = false) Long id,
             @RequestParam(value = "priceMin", required = false) Float min,
             @RequestParam(value = "priceMax", required = false) Float max,
             @RequestParam(value = "color", required = false) String color,
@@ -48,8 +42,7 @@ public class ProductController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "sort", defaultValue = "id") String sort,
-            @RequestParam(value = "direction", defaultValue = "ASC") String direction
-    ) {
+            @RequestParam(value = "direction", defaultValue = "ASC") String direction) {
         Pageable pageable = PageRequest.of(page, size, Sort.Direction.fromString(direction), sort);
         return ResponseEntity.ok(productService.filter(min, max, name, color, pageable));
     }
