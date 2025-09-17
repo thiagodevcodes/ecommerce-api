@@ -4,6 +4,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,6 +32,9 @@ public interface ProductApiDoc {
 
     @Operation(summary = "Inserir Produto", description = "Insere um produto na base dados")
     public ResponseEntity<ProductResponseDto> insert(@Valid @RequestBody ProductCreateDto product, BindingResult br);
+
+    @Operation(summary = "Inserir Produtos em Lote", description = "Insere diversos produtos em lote na base dados")
+    public ResponseEntity<Map<String, Object>> insertBatchAsync(@RequestBody List<ProductCreateDto> dtos);
 
     @Operation(summary = "Remover Produto", description = "Remove um produto de acordo com o id")
     public ResponseEntity<Void> delete(@PathVariable("id") Long id);

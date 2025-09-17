@@ -15,8 +15,6 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString
 public class ProductCreateDto {
-    private Long id;
-
     @NotBlank(message = "O Nome não pode estar em branco.")
     @Size(max = 100)
     private String name;

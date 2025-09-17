@@ -12,7 +12,6 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString
 public class ProductUpdateDto {
-    private Long id;
     private String name;
     private String color;
     private Float price;
