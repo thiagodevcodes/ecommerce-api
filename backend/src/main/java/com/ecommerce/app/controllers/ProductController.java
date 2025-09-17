@@ -1,5 +1,6 @@
 package com.ecommerce.app.controllers;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -33,7 +34,9 @@ public class ProductController implements ProductApiDoc {
     private ProductService productService;
 
     @GetMapping
-    public ResponseEntity<PageResponseDto<ProductResponseDto>> findAll(ProductFilterRequest filterRequest) {
+    public ResponseEntity<PageResponseDto<ProductResponseDto>> findAll(
+            @ParameterObject ProductFilterRequest filterRequest
+    ) {
         Pageable pageable = PageRequest.of(
                 filterRequest.getPage(),
                 filterRequest.getSize(),
@@ -41,7 +44,7 @@ public class ProductController implements ProductApiDoc {
                 filterRequest.getSort()
         );
 
-        Page<ProductResponseDto> page = productService.findAllWithFilter(
+        Page<ProductResponseDto> result = productService.findAllWithFilter(
                 filterRequest.getPriceMin(),
                 filterRequest.getPriceMax(),
                 filterRequest.getName(),
@@ -49,7 +52,7 @@ public class ProductController implements ProductApiDoc {
                 pageable
         );
 
-        return ResponseEntity.ok(PageResponseDto.from(page));
+        return ResponseEntity.ok(PageResponseDto.from(result));
     }
 
     @GetMapping("/{id}")

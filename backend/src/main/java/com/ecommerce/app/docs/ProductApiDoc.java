@@ -15,14 +15,14 @@ import com.ecommerce.app.controllers.dtos.product.ProductFilterRequest;
 import com.ecommerce.app.controllers.dtos.product.ProductResponseDto;
 import com.ecommerce.app.controllers.dtos.product.ProductUpdateDto;
 
-
 @Tag(name = "Produtos", description = "Endpoints de gerenciamento de produtos")
 public interface ProductApiDoc {
     @Operation(summary = "Buscar produtos", description = "Retorna uma lista paginada de produtos de acordo com os filtros informados.")
-    public ResponseEntity<PageResponseDto<ProductResponseDto>> findAll(ProductFilterRequest filterRequest);
+    public ResponseEntity<PageResponseDto<ProductResponseDto>> findAll(ProductFilterRequest productFilterRequest);
 
     @Operation(summary = "Atualizar Produto", description = "Atualiza um produto de acordo com o id")
-    public ResponseEntity<ProductResponseDto> updateById(@Valid @RequestBody ProductUpdateDto product, @PathVariable("id") Long id, BindingResult br);
+    public ResponseEntity<ProductResponseDto> updateById(@Valid @RequestBody ProductUpdateDto product,
+            @PathVariable("id") Long id, BindingResult br);
 
     @Operation(summary = "Buscar Produto por id", description = "Retorna um produto de acordo com o id")
     public ResponseEntity<ProductResponseDto> findById(@PathVariable("id") Long id);
@@ -32,4 +32,5 @@ public interface ProductApiDoc {
 
     @Operation(summary = "Remover Produto", description = "Remove um produto de acordo com o id")
     public ResponseEntity<Void> delete(@PathVariable("id") Long id);
+
 }
