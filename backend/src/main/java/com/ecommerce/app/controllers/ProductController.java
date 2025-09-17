@@ -1,6 +1,7 @@
 package com.ecommerce.app.controllers;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,7 @@ import com.ecommerce.app.controllers.dtos.product.ProductFilterRequest;
 import com.ecommerce.app.controllers.dtos.product.ProductResponseDto;
 import com.ecommerce.app.controllers.dtos.product.ProductUpdateDto;
 import com.ecommerce.app.docs.ProductApiDoc;
+import com.ecommerce.app.models.ProductModel;
 import com.ecommerce.app.services.ProductService;
 import com.ecommerce.app.services.exceptions.ConstraintException;
 
@@ -80,16 +82,16 @@ public class ProductController implements ProductApiDoc {
     }
 
     @PostMapping("/batch")
-    public ResponseEntity<List<ProductResponseDto>> insertBatch(
-            @Valid @RequestBody List<ProductCreateDto> products,
-            BindingResult br) {
+    public ResponseEntity<Map<String, Object>> insertBatchAsync(@RequestBody List<ProductCreateDto> dtos) {
+        productService.insertBatch(dtos); // roda em background
 
-        if (br.hasErrors()) {
-            throw new ConstraintException(br.getAllErrors().get(0).getDefaultMessage());
-        }
+        Map<String, Object> response = Map.of(
+            "message", "Processamento iniciado!",
+            "items", dtos.size() + " itens",
+            "object", ProductModel.class // ou pode mapear para mostrar apenas campos desejados
+        );
 
-        List<ProductResponseDto> produtosInseridos = productService.insertBatch(products);
-        return ResponseEntity.ok().body(produtosInseridos);
+        return ResponseEntity.accepted().body(response);
     }
 
     @DeleteMapping("/{id}")

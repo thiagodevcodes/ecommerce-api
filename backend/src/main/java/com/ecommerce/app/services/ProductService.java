@@ -3,12 +3,13 @@ package com.ecommerce.app.services;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.ecommerce.app.controllers.dtos.product.ProductCreateDto;
@@ -16,14 +17,25 @@ import com.ecommerce.app.controllers.dtos.product.ProductResponseDto;
 import com.ecommerce.app.controllers.dtos.product.ProductUpdateDto;
 import com.ecommerce.app.models.ProductModel;
 import com.ecommerce.app.repositories.ProductRepository;
+import com.ecommerce.app.services.exceptions.ConstraintException;
 import com.ecommerce.app.services.exceptions.DataIntegrityException;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 
 @Service
 public class ProductService {
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private Validator validator;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public List<ProductResponseDto> findAll() {
         List<ProductModel> products = productRepository.findAll();
@@ -47,15 +59,32 @@ public class ProductService {
         }
     }
 
+    @Async
     @Transactional
-    public List<ProductResponseDto> insertBatch(List<ProductCreateDto> dtos) {
-        List<ProductModel> entities = dtos.stream()
-                .map(this::convertRequestDtoToModel)
-                .collect(Collectors.toList());
+    public void insertBatch(List<ProductCreateDto> dtos) {
+        List<ProductModel> batch = new ArrayList<>();
+        int batchSize = 50;
 
-        List<ProductModel> saved = productRepository.saveAll(entities);
+        for (int i = 0; i < dtos.size(); i++) {
+            ProductCreateDto dto = dtos.get(i);
 
-        return convertListToDtoList(saved);
+            // Validação individual
+            Set<ConstraintViolation<ProductCreateDto>> violations = validator.validate(dto);
+            if (!violations.isEmpty()) {
+                throw new ConstraintException(
+                        "Erro no produto " + (i + 1) + ": " + violations.iterator().next().getMessage());
+            }
+
+            batch.add(convertRequestDtoToModel(dto));
+
+            // Persistir batch
+            if (batch.size() == batchSize || i == dtos.size() - 1) {
+                productRepository.saveAll(batch);
+                entityManager.flush(); // envia para o DB
+                entityManager.clear(); // limpa memória
+                batch.clear();
+            }
+        }
     }
 
     public ProductResponseDto findById(Long id) {
