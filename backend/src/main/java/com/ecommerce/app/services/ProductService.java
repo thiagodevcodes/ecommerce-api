@@ -3,6 +3,7 @@ package com.ecommerce.app.services;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -16,6 +17,8 @@ import com.ecommerce.app.controllers.dtos.product.ProductUpdateDto;
 import com.ecommerce.app.models.ProductModel;
 import com.ecommerce.app.repositories.ProductRepository;
 import com.ecommerce.app.services.exceptions.DataIntegrityException;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class ProductService {
@@ -42,6 +45,17 @@ public class ProductService {
         } catch (DataIntegrityViolationException e) {
             throw new DataIntegrityException("Campo(s) obrigatório(s) do Aluno não foi(foram) preenchido(s).");
         }
+    }
+
+    @Transactional
+    public List<ProductResponseDto> insertBatch(List<ProductCreateDto> dtos) {
+        List<ProductModel> entities = dtos.stream()
+                .map(this::convertRequestDtoToModel)
+                .collect(Collectors.toList());
+
+        List<ProductModel> saved = productRepository.saveAll(entities);
+
+        return convertListToDtoList(saved);
     }
 
     public ProductResponseDto findById(Long id) {

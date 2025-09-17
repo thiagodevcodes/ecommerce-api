@@ -2,6 +2,8 @@ package com.ecommerce.app.controllers.dtos.product;
 
 import org.springframework.data.domain.Sort;
 
+import com.ecommerce.app.models.enums.ProductSortField;
+
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import lombok.AllArgsConstructor;
@@ -29,14 +31,14 @@ public class ProductFilterRequest {
     private String color;
 
     @Parameter(description = "Página", example = "0", in = ParameterIn.QUERY)
-    private int page;
+    private Integer page = 0;
 
     @Parameter(description = "Tamanho da página", example = "10", in = ParameterIn.QUERY)
-    private int size;
+    private Integer size = 10;
 
     @Parameter(description = "Campo para ordenação", example = "name", in = ParameterIn.QUERY)
-    private String sort;
+    private ProductSortField sort = ProductSortField.name;
 
     @Parameter(description = "Direção da ordenação", example = "ASC", in = ParameterIn.QUERY)
-    private Sort.Direction direction;
+    private Sort.Direction direction = Sort.Direction.ASC;
 }

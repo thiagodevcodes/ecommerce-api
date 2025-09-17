@@ -1,5 +1,7 @@
 package com.ecommerce.app.controllers;
 
+import java.util.List;
+
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -35,22 +37,19 @@ public class ProductController implements ProductApiDoc {
 
     @GetMapping
     public ResponseEntity<PageResponseDto<ProductResponseDto>> findAll(
-            @ParameterObject ProductFilterRequest filterRequest
-    ) {
+            @ParameterObject ProductFilterRequest filterRequest) {
         Pageable pageable = PageRequest.of(
                 filterRequest.getPage(),
                 filterRequest.getSize(),
                 filterRequest.getDirection(),
-                filterRequest.getSort()
-        );
+                filterRequest.getSort().name());
 
         Page<ProductResponseDto> result = productService.findAllWithFilter(
                 filterRequest.getPriceMin(),
                 filterRequest.getPriceMax(),
                 filterRequest.getName(),
                 filterRequest.getColor(),
-                pageable
-        );
+                pageable);
 
         return ResponseEntity.ok(PageResponseDto.from(result));
     }
@@ -78,6 +77,19 @@ public class ProductController implements ProductApiDoc {
 
         ProductResponseDto alunoDto = productService.insert(product);
         return ResponseEntity.ok().body(alunoDto);
+    }
+
+    @PostMapping("/batch")
+    public ResponseEntity<List<ProductResponseDto>> insertBatch(
+            @Valid @RequestBody List<ProductCreateDto> products,
+            BindingResult br) {
+
+        if (br.hasErrors()) {
+            throw new ConstraintException(br.getAllErrors().get(0).getDefaultMessage());
+        }
+
+        List<ProductResponseDto> produtosInseridos = productService.insertBatch(products);
+        return ResponseEntity.ok().body(produtosInseridos);
     }
 
     @DeleteMapping("/{id}")
