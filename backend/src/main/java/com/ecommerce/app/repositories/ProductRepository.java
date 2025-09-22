@@ -15,6 +15,8 @@ import com.ecommerce.app.models.ProductModel;
 public interface ProductRepository extends JpaRepository<ProductModel, Long> {
     List<ProductModel> findByName(String name);
 
+    Boolean existsByName(String name);
+
     List<ProductModel> findByColor(String color);
 
     List<ProductModel> findByPriceBetween(Float min, Float max);

@@ -25,7 +25,9 @@ import com.ecommerce.app.controllers.dtos.product.ProductFilterRequest;
 import com.ecommerce.app.controllers.dtos.product.ProductResponseDto;
 import com.ecommerce.app.controllers.dtos.product.ProductUpdateDto;
 import com.ecommerce.app.docs.ProductApiDoc;
+import com.ecommerce.app.models.BatchJob;
 import com.ecommerce.app.models.ProductModel;
+import com.ecommerce.app.repositories.BatchJobRepository;
 import com.ecommerce.app.services.ProductService;
 import com.ecommerce.app.services.exceptions.ConstraintException;
 
@@ -36,6 +38,9 @@ import jakarta.validation.Valid;
 public class ProductController implements ProductApiDoc {
     @Autowired
     private ProductService productService;
+
+    @Autowired
+    private BatchJobRepository batchJobRepository;
 
     @GetMapping
     public ResponseEntity<PageResponseDto<ProductResponseDto>> findAll(
@@ -83,15 +88,41 @@ public class ProductController implements ProductApiDoc {
 
     @PostMapping("/batch")
     public ResponseEntity<Map<String, Object>> insertBatchAsync(@RequestBody List<ProductCreateDto> dtos) {
-        productService.insertBatch(dtos); // roda em background
+        BatchJob job = new BatchJob();
+        job.setModel(ProductModel.class.getSimpleName());
+        job = batchJobRepository.save(job);
+        
+
+        productService.insertProductsAsync(job.getId(), dtos);
 
         Map<String, Object> response = Map.of(
-            "message", "Processamento iniciado!",
-            "items", dtos.size() + " itens",
-            "object", ProductModel.class // ou pode mapear para mostrar apenas campos desejados
-        );
+                "message", "Processamento de lote iniciado com sucesso.",
+                "id", job.getId(),
+                "items", dtos.size(),
+                "model", job.getModel(),
+                "statusUrl", "/batch/" + job.getId());
 
         return ResponseEntity.accepted().body(response);
+    }
+
+    @DeleteMapping("/batch")
+    public ResponseEntity<Map<String, Object>> deleteBatchAsync(@RequestBody List<ProductCreateDto> dtos) {
+        BatchJob job = new BatchJob();
+        job = batchJobRepository.save(job);
+
+        productService.insertProductsAsync(job.getId(), dtos);
+
+        Map<String, Object> response = Map.of(
+                "message", "Processamento de lote iniciado com sucesso.",
+                "id", job.getId(),
+                "statusUrl", "/batch/" + job.getId());
+
+        return ResponseEntity.accepted().body(response);
+    }
+
+    @GetMapping("/batch/{id}")
+    public ResponseEntity<BatchJob> getBatchStatus(@PathVariable Long id) {
+        return ResponseEntity.of(batchJobRepository.findById(id));
     }
 
     @DeleteMapping("/{id}")

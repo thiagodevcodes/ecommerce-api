@@ -3,13 +3,11 @@ package com.ecommerce.app.services;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.ecommerce.app.controllers.dtos.product.ProductCreateDto;
@@ -17,14 +15,10 @@ import com.ecommerce.app.controllers.dtos.product.ProductResponseDto;
 import com.ecommerce.app.controllers.dtos.product.ProductUpdateDto;
 import com.ecommerce.app.models.ProductModel;
 import com.ecommerce.app.repositories.ProductRepository;
-import com.ecommerce.app.services.exceptions.ConstraintException;
 import com.ecommerce.app.services.exceptions.DataIntegrityException;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.transaction.Transactional;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validator;
 
 @Service
 public class ProductService {
@@ -32,7 +26,7 @@ public class ProductService {
     private ProductRepository productRepository;
 
     @Autowired
-    private Validator validator;
+    private BatchProcessorService batchProcessorService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -50,41 +44,24 @@ public class ProductService {
 
     public ProductResponseDto insert(ProductCreateDto productDto) {
         try {
+            if (productRepository.existsByName(productDto.getName())) 
+                throw new DataIntegrityException("Produto com esse nome já existe");
+            
             ProductModel newProduct = convertRequestDtoToModel(productDto);
-
             newProduct = productRepository.save(newProduct);
             return convertModelToResponseDto(newProduct);
         } catch (DataIntegrityViolationException e) {
-            throw new DataIntegrityException("Campo(s) obrigatório(s) do Aluno não foi(foram) preenchido(s).");
+            throw new DataIntegrityException("Erro ao inserir um produto");
         }
     }
 
-    @Async
-    @Transactional
-    public void insertBatch(List<ProductCreateDto> dtos) {
-        List<ProductModel> batch = new ArrayList<>();
-        int batchSize = 50;
+    public void insertProductsAsync(Long batchJobId, List<ProductCreateDto> dtos) {
+        // Usa o serviço genérico para processar o lote
+        batchProcessorService.processBatchJob(batchJobId, dtos, this::insert);
+    }
 
-        for (int i = 0; i < dtos.size(); i++) {
-            ProductCreateDto dto = dtos.get(i);
-
-            // Validação individual
-            Set<ConstraintViolation<ProductCreateDto>> violations = validator.validate(dto);
-            if (!violations.isEmpty()) {
-                throw new ConstraintException(
-                        "Erro no produto " + (i + 1) + ": " + violations.iterator().next().getMessage());
-            }
-
-            batch.add(convertRequestDtoToModel(dto));
-
-            // Persistir batch
-            if (batch.size() == batchSize || i == dtos.size() - 1) {
-                productRepository.saveAll(batch);
-                entityManager.flush(); // envia para o DB
-                entityManager.clear(); // limpa memória
-                batch.clear();
-            }
-        }
+    public void deleteProductsAsync(Long batchJobId, List<Long> ids) {
+        batchProcessorService.processBatchJob(batchJobId, ids, productRepository::deleteById);
     }
 
     public ProductResponseDto findById(Long id) {
